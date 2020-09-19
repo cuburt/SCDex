@@ -1,11 +1,16 @@
 import flask
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
+from werkzeug.serving import run_simple
+import sys
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-import sys
 
-app = flask.Flask(__name__)
-graph = dash.Dash(__name__,server=app, url_base_pathname='/graph')
+
+
+server = flask.Flask(__name__)
+
+graph = dash.Dash(__name__,server=server, url_base_pathname='/')
 
 graph.layout = html.Div(children=[html.H1('Dashboard'),
                                   dcc.Graph(id='example',
@@ -19,14 +24,17 @@ graph.layout = html.Div(children=[html.H1('Dashboard'),
                                                 }
                                             })])
 
+# @server.route('/')
+# def homepage():
+#     return flask.redirect('/graph')
 
-@app.route('/')
-def homepage():
-    return flask.redirect('/graph')
-
-@app.route('/about')
+@server.route('/about')
 def about():
     return flask.render_template('about.html')
+#
+# application = DispatcherMiddleware(server, {
+#     '/dash':graph.server
+# })
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    server.run(debug=True)
