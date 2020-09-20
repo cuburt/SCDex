@@ -20,18 +20,18 @@ from datetime import datetime
 from statistics import mean
 import math
 
-def start(contractor_name, project_name):
-    df = pd.read_csv('D:/devs/flask/scsf/dataset/full_slippage_dataset.csv',encoding='utf-8',engine='python')
-    df['Contract Amount'] = df['Contract Amount'].astype(str)
-    df['No. of Days'] = df['No. of Days'].astype(str)
-    df = df.loc[df['Implementor']==contractor_name]
-    df = df.loc[df['Name of Project']==project_name]
-    df.set_index('index',inplace=True)
-    df.index = pd.to_datetime(df.index)
-    project_list = upsample(df)
-
-
-    return forecast(project_list)
+# def start(contractor_name, project_name):
+#     df = pd.read_csv('D:/devs/flask/scsf/dataset/full_slippage_dataset.csv',encoding='utf-8',engine='python')
+#     df['Contract Amount'] = df['Contract Amount'].astype(str)
+#     df['No. of Days'] = df['No. of Days'].astype(str)
+#     df = df.loc[df['Implementor']==contractor_name]
+#     df = df.loc[df['Name of Project']==project_name]
+#     df.set_index('index',inplace=True)
+#     df.index = pd.to_datetime(df.index)
+#     project_list = upsample(df)
+#
+#
+#     return forecast(project_list)
 
 
 
@@ -76,7 +76,7 @@ def train_model(X_lately, X, y, max_iter, min_perc, cross_val_score, test_set):
         if model.score(X_test, y_test) >= min_perc/100:
             y_test_pred = model.predict(X_test)
             y_pred = model.predict(X_lately)
-            print('ADJ. R2: ',score_model(X, y_test, y_test_pred)[0], '\nRMSE: ',score_model(X, y_test, y_test_pred)[1])
+            #print('ADJ. R2: ',score_model(X, y_test, y_test_pred)[0], '\nRMSE: ',score_model(X, y_test, y_test_pred)[1])
             cross_val_score.append(score_model(X, y_test, y_test_pred)[0])
             return [X_train, X_test, y_train, y_test, y_pred, score_model(X, y_test, y_test_pred)[1]]
         else: continue
@@ -101,57 +101,57 @@ class CustomWalkForward:
             yield np.array(train_set.index),np.array(test_set.index)
 
 
-def forecast(project_list):
-    max_iter = 500
-    min_perc = 80
-    cross_val_score = []
-    tscv = CustomWalkForward(test_size=0.2, gap=0)
-    itpdf = pd.concat(project_list)
-    itpdf = itpdf[['Slippage', '% WT Plan']]
-    ave_rmse = []
-
-    for train_index, test_index in tscv.split(itpdf):
-        # print('TRAIN: ', train_index, 'TEST: ', test_index)
-        cv_df = pd.concat(project_list)
-        cv_df = cv_df[['Slippage', '% WT Plan']]
-        forecast_col = 'Slippage'
-        X = cv_df
-        scaler = preprocessing.StandardScaler()
-        scaled_X = scaler.fit_transform(X)
-        data = {'Slippage': scaled_X[:, 0], '% WT Plan': scaled_X[:, 1]}
-        X = pd.DataFrame(data=data, index=X.index)
-        X, X_lately = X.loc[train_index], X.loc[test_index]
-
-        cv_df['label'] = cv_df[forecast_col].head(len(train_index) + len(test_index)).shift(-(len(test_index)))
-
-        cv_df.dropna(inplace=True)
-        y = np.array(cv_df['label'])
-
-        full_set = train_model(X_lately, X, y, max_iter, min_perc, cross_val_score, test_set=True)
-        y_pred = full_set[4]
-        print(full_set[5])
-        ave_rmse.append(full_set[5])
-        cv_df['Forecast'] = np.nan
-
-        last_date = cv_df.iloc[-1].name
-        last_unix = last_date.timestamp()
-        one_day = 86400
-        next_unix = last_unix + one_day
-
-        for i in y_pred:
-            next_date = datetime.fromtimestamp(next_unix)
-            next_unix += one_day
-            cv_df.loc[next_date] = [np.nan for _ in range(len(cv_df.columns) - 1)] + [i]
-
-        cv_df['label'] = cv_df['label'].shift(len(test_index))
-        cv_df['Forecast'] = np.nan
-
-        for i in y_pred:
-            next_date = datetime.fromtimestamp(next_unix)
-            next_unix += one_day
-            cv_df.loc[next_date] = [np.nan for _ in range(len(cv_df.columns) - 1)] + [i]
-
-        yield cv_df
+# def forecast(project_list):
+#     max_iter = 500
+#     min_perc = 80
+#     cross_val_score = []
+#     tscv = CustomWalkForward(test_size=0.2, gap=0)
+#     itpdf = pd.concat(project_list)
+#     itpdf = itpdf[['Slippage', '% WT Plan']]
+#     ave_rmse = []
+#
+#     for train_index, test_index in tscv.split(itpdf):
+#         # print('TRAIN: ', train_index, 'TEST: ', test_index)
+#         cv_df = pd.concat(project_list)
+#         cv_df = cv_df[['Slippage', '% WT Plan']]
+#         forecast_col = 'Slippage'
+#         X = cv_df
+#         scaler = preprocessing.StandardScaler()
+#         scaled_X = scaler.fit_transform(X)
+#         data = {'Slippage': scaled_X[:, 0], '% WT Plan': scaled_X[:, 1]}
+#         X = pd.DataFrame(data=data, index=X.index)
+#         X, X_lately = X.loc[train_index], X.loc[test_index]
+#
+#         cv_df['label'] = cv_df[forecast_col].head(len(train_index) + len(test_index)).shift(-(len(test_index)))
+#
+#         cv_df.dropna(inplace=True)
+#         y = np.array(cv_df['label'])
+#
+#         full_set = train_model(X_lately, X, y, max_iter, min_perc, cross_val_score, test_set=True)
+#         y_pred = full_set[4]
+#         print(full_set[5])
+#         ave_rmse.append(full_set[5])
+#         cv_df['Forecast'] = np.nan
+#
+#         last_date = cv_df.iloc[-1].name
+#         last_unix = last_date.timestamp()
+#         one_day = 86400
+#         next_unix = last_unix + one_day
+#
+#         for i in y_pred:
+#             next_date = datetime.fromtimestamp(next_unix)
+#             next_unix += one_day
+#             cv_df.loc[next_date] = [np.nan for _ in range(len(cv_df.columns) - 1)] + [i]
+#
+#         cv_df['label'] = cv_df['label'].shift(len(test_index))
+#         cv_df['Forecast'] = np.nan
+#
+#         for i in y_pred:
+#             next_date = datetime.fromtimestamp(next_unix)
+#             next_unix += one_day
+#             cv_df.loc[next_date] = [np.nan for _ in range(len(cv_df.columns) - 1)] + [i]
+#
+#         yield cv_df
 
 server = flask.Flask(__name__)
 
@@ -202,15 +202,78 @@ contractor_name, project_name = 'FREDEN CONSTRUCTION','Const. of 2-Storey Barang
 #             }
 
 
+df = pd.read_csv('D:/devs/flask/scsf/dataset/full_slippage_dataset.csv',encoding='utf-8',engine='python')
+df['Contract Amount'] = df['Contract Amount'].astype(str)
+df['No. of Days'] = df['No. of Days'].astype(str)
+df = df.loc[df['Implementor']==contractor_name]
+df = df.loc[df['Name of Project']==project_name]
+df.set_index('index',inplace=True)
+df.index = pd.to_datetime(df.index)
+project_list = upsample(df)
+
+max_iter = 500
+min_perc = 80
+cross_val_score = []
+tscv = CustomWalkForward(test_size=0.2, gap=0)
+itpdf = pd.concat(project_list)
+itpdf = itpdf[['Slippage', '% WT Plan']]
+ave_rmse = []
+
+for train_index, test_index in tscv.split(itpdf):
+    # print('TRAIN: ', train_index, 'TEST: ', test_index)
+    cv_df = pd.concat(project_list)
+    cv_df = cv_df[['Slippage', '% WT Plan']]
+    forecast_col = 'Slippage'
+    X = cv_df
+    scaler = preprocessing.StandardScaler()
+    scaled_X = scaler.fit_transform(X)
+    data = {'Slippage': scaled_X[:, 0], '% WT Plan': scaled_X[:, 1]}
+    X = pd.DataFrame(data=data, index=X.index)
+    X, X_lately = X.loc[train_index], X.loc[test_index]
+
+    cv_df['label'] = cv_df[forecast_col].head(len(train_index) + len(test_index)).shift(-(len(test_index)))
+
+    cv_df.dropna(inplace=True)
+    y = np.array(cv_df['label'])
+
+    full_set = train_model(X_lately, X, y, max_iter, min_perc, cross_val_score, test_set=True)
+    y_pred = full_set[4]
+    ave_rmse.append(full_set[5])
+    cv_df['Forecast'] = np.nan
+
+    last_date = cv_df.iloc[-1].name
+    last_unix = last_date.timestamp()
+    one_day = 86400
+    next_unix = last_unix + one_day
+
+    for i in y_pred:
+        next_date = datetime.fromtimestamp(next_unix)
+        next_unix += one_day
+        cv_df.loc[next_date] = [np.nan for _ in range(len(cv_df.columns) - 1)] + [i]
+
+
+    cv_df['label'] = cv_df['label'].shift(len(test_index))
+    cv_df['Forecast'] = np.nan
+
+    for i in y_pred:
+        next_date = datetime.fromtimestamp(next_unix)
+        next_unix += one_day
+        cv_df.loc[next_date] = [np.nan for _ in range(len(cv_df.columns) - 1)] + [i]
+
+    # print(cv_df['Forecast'])
+for lead in cv_df['label'].values:
+    for slippage in cv_df['Slippage'].values:
+        if lead == slippage:
+            cv_df['label'].loc[cv_df['label']==lead] = np.nan
 
 graph.layout = html.Div(children=[html.H1('Dashboard'),
                                   dcc.Input(id='input', value='Enter Project Name here',type='text'),
                                   dcc.Graph(id='example',
                                             figure={
                                                 'data':[
-                                                    {'x':pd.DataFrame(next(start(contractor_name, project_name))).index,'y':pd.DataFrame(next(start(contractor_name, project_name)))['Slippage'],'type':'bar','name':'Slippage'},
-                                                    {'x':pd.DataFrame(next(start(contractor_name, project_name))).index,'y':pd.DataFrame(next(start(contractor_name, project_name)))['label'],'type':'bar','name':'Lead'},
-                                                    {'x':pd.DataFrame(next(start(contractor_name, project_name))).index,'y':pd.DataFrame(next(start(contractor_name, project_name)))['Forecast'],'type':'bar','name':'Forecast'}
+                                                    {'x':cv_df.index,'y':cv_df['Slippage'],'type':'bar','name':'Slippage'},
+                                                    {'x':cv_df.index,'y':cv_df['label'],'type':'bar','name':'Lead'},
+                                                    {'x':cv_df.index,'y':cv_df['Forecast'],'type':'bar','name':'Forecast'}
                                                 ],
                                                 'layout':{
                                                     'title':project_name
