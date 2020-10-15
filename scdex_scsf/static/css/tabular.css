@@ -1,0 +1,63 @@
+
+table{
+empty-cells:show;
+}
+tr{
+min-height:2em;
+}
+table, tr, td {
+    border: 1px solid black;
+    margin: 0 !important;
+    padding: 2px 0px 2px !important;
+}
+tr td p {
+    font-size: 10px;
+    margin-top: 1px;
+    margin-bottom: 1px;
+}
+input {
+    margin: 0;
+    margin-bottom: 5px !important;
+}
+.center{
+    text-align: center;
+}
+.right{
+text-align: right;
+}
+.top{
+    vertical-align: top;
+}
+.middle{
+    vertical-align: middle !important;
+}
+.bottom{
+    vertical-align: bottom;
+}
+.no-border{
+    border: 0;
+}
+.strong{
+    font-weight:bold;
+}
+.upcase{
+    text-transform: uppercase;
+}
+.dotted{
+    border-bottom: 1px dotted black !important;
+}
+.double{
+    border-bottom:1px double black !important;
+}
+.bleft{
+border-left: 1px solid black !important;
+}
+.bright{
+border-right: 1px solid black !important;
+}
+.btop{
+border-top: 1px solid black !important;
+}
+.bbottom{
+border-bottom: 1px solid black !important;
+}
