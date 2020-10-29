@@ -51,13 +51,6 @@ def body():
                     dbc.Card(
                         dbc.CardBody([
                             dbc.CardBody([
-                                dbc.Row([
-                                    dbc.Col([
-                                        dcc.RangeSlider(
-                                            id='date-rangeSlider'
-                                        )
-                                    ], md=12)
-                                ]),
                                 html.H3(id='score_lbl'),
                                 html.H3(id='rmse_lbl'),
                             ]),
@@ -68,9 +61,13 @@ def body():
 
                 dbc.Col([
                     dbc.Card(
-
-                        dcc.Graph(
-                            id='forecast-graph'
+                        dcc.Loading(
+                            id='forecast-loading',
+                            type='circle',
+                            children=[
+                                html.Div(id='forecast-loading-output'),
+                                dcc.Graph(id='forecast-graph')
+                            ]
                         )
                     )
                 ], style={'margin':'0px','padding':'0px 4px'})

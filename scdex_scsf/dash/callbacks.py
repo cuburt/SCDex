@@ -3,7 +3,9 @@ from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
+import dash_html_components as html
 from .data_model import dataframe
+import time
 
 
 def create_datatable(i):
@@ -17,8 +19,8 @@ def create_contractor_dropdown():
     )
     return dropdown
 
-def dataFrame(contractor=None, project=None, date_range=None):
-    data_frame = dataframe(contractor, project, date_range)
+def dataFrame(contractor=None, project=None):
+    data_frame = dataframe(contractor, project)
     return data_frame
 
 df = dataFrame()
@@ -49,40 +51,38 @@ def init_callbacks(app):
     def update_project_dropdown(contractor):
         return [{'label':project, 'value':project} for project in set(dataFrame()['Name of Project'].loc[dataFrame()['Implementor']==contractor].values)]
 
-    @app.callback([Output('date-rangeSlider','marks'),
-                   Output('date-rangeSlider','min'),
-                   Output('date-rangeSlider','max')],
+    @app.callback(Output('forecast-graph','figure'),
                   [Input('contractor-dropdown','value'),
                    Input('project-dropdown','value')])
-    def update_rangeSlider(contractor, project):
-        df = dataFrame(contractor, project)
-        marks = {i: 'Year\n{}'.format(i) for i in set([int(year) for year in df[0]['Year'].values])}
-        min_ = min(set([int(year) for year in df[0]['Year'].values]))
-        max_ = max(set([int(year) for year in df[0]['Year'].values]))
-        return marks, min_, max_
+    def update_forecast_graph(contractor, project):
+        time.sleep(1)
+        try:
+            df = dataFrame(contractor, project)
+            figure = go.Figure(
+                data=[{'x': df[0].index, 'y': df[0]['Slippage'],
+                       'mode': 'lines+markers', 'name': 'Slippage'},
+                      {'x': df[0].index, 'y': df[0]['train'],
+                       'mode': 'lines+markers', 'name': 'Lead'},
+                      {'x': df[0].index, 'y': df[0]['Forecast'],
+                       'mode': 'lines+markers', 'name': 'Forecast'}],
+                layout=go.Layout({"title":project,
+                                  "xaxis":{
+                                      'rangeslider': {'visible': True},
+                                      'rangeselector': {'visible': True,
+                                                        'buttons': [{'step': 'all'}, {'step': 'year'},{'step': 'month'},
+                                                                    {'step': 'day'}]}},
+                                  "showlegend":False,
+                                  "height":500}
+                                 )
+            )
+        except Exception as e:
+            figure = dbc.Alert("ERROR: "+str(e), color="danger"),
 
-    @app.callback(Output('forecast-graph','figure'),
-                  [Input('date-rangeSlider','value'),
-                   Input('contractor-dropdown','value'),
-                   Input('project-dropdown','value')])
-    def update_forecast_graph(date_range, contractor, project):
-        df = dataFrame(contractor, project, date_range)
-        figure = go.Figure(
-            data=[{'x': df[0].index, 'y': df[0]['Slippage'],
-                   'mode': 'lines+markers', 'name': 'Slippage'},
-                  {'x': df[0].index, 'y': df[0]['label'],
-                   'mode': 'lines+markers', 'name': 'Lead'},
-                  {'x': df[0].index, 'y': df[0]['Forecast'],
-                   'mode': 'lines+markers', 'name': 'Forecast'}],
-            layout=go.Layout({"title":project,
-                              "xaxis":{
-                                  'rangeslider': {'visible': True},
-                                  'rangeselector': {'visible': True,
-                                                    'buttons': [{'step': 'all'}, {'step': 'year'},{'step': 'month'},
-                                                                {'step': 'day'}]}},
-                              "showlegend":False,
-                              "height":500}
-                             )
-        )
         return figure
+
+    # @app.callback()
+    # def trigger_spinner(df):
+    #     time.sleep(1)
+    #     return df
+
 
