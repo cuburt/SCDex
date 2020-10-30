@@ -7,10 +7,6 @@ import dash_html_components as html
 from .data_model import dataframe
 import time
 
-
-def create_datatable(i):
-    return dbc.Table.from_dataframe((dataFrame()), striped=True, bordered=True, hover=True, className="md-10")
-
 def create_contractor_dropdown():
     dropdown = dcc.Dropdown(
         id='contractor-dropdown',
@@ -22,9 +18,6 @@ def create_contractor_dropdown():
 def dataFrame(contractor=None, project=None):
     data_frame = dataframe(contractor, project)
     return data_frame
-
-df = dataFrame()
-filtered_df = dataFrame()
 
 def init_callbacks(app):
     @app.callback(
@@ -51,13 +44,28 @@ def init_callbacks(app):
     def update_project_dropdown(contractor):
         return [{'label':project, 'value':project} for project in set(dataFrame()['Name of Project'].loc[dataFrame()['Implementor']==contractor].values)]
 
-    @app.callback(Output('forecast-graph','figure'),
-                  [Input('contractor-dropdown','value'),
-                   Input('project-dropdown','value')])
+    @app.callback([Output('notif-space', 'children'),
+                   Output('forecast-graph', 'figure'),
+                   Output('distribution-graph', 'figure'),
+                   Output('regression-graph', 'figure'),
+                   Output('score_lbl', 'children'),
+                   Output('rmse_lbl', 'children'),
+                   Output('collapse-1', 'children'),
+                   Output('collapse-2', 'children')],
+                  [Input('contractor-dropdown', 'value'),
+                   Input('project-dropdown', 'value')])
     def update_forecast_graph(contractor, project):
         time.sleep(1)
+        if not contractor and not project:
+            contractor, project = 'FREDEN CONSTRUCTION', 'Const. of 2-Storey Barangay Hall, Brgy. Kablon'
+
+        df = dataFrame(contractor, project)
+
+        accordion_table2 = dbc.CardBody(children=[
+            dbc.Table.from_dataframe((dataFrame()), striped=True, bordered=True, hover=True, className="md-10")
+        ])
+
         try:
-            df = dataFrame(contractor, project)
             figure = go.Figure(
                 data=[{'x': df[0].index, 'y': df[0]['Slippage'],
                        'mode': 'lines+markers', 'name': 'Slippage'},
@@ -65,24 +73,32 @@ def init_callbacks(app):
                        'mode': 'lines+markers', 'name': 'Lead'},
                       {'x': df[0].index, 'y': df[0]['Forecast'],
                        'mode': 'lines+markers', 'name': 'Forecast'}],
-                layout=go.Layout({"title":project,
-                                  "xaxis":{
+                layout=go.Layout({"title": project,
+                                  "xaxis": {
                                       'rangeslider': {'visible': True},
                                       'rangeselector': {'visible': True,
-                                                        'buttons': [{'step': 'all'}, {'step': 'year'},{'step': 'month'},
+                                                        'buttons': [{'step': 'all'}, {'step': 'year'},
+                                                                    {'step': 'month'},
                                                                     {'step': 'day'}]}},
-                                  "showlegend":False,
-                                  "height":500}
+                                  "showlegend": False,
+                                  "height": 500}
                                  )
             )
+
+            dist_figure = {'layout': {'title': 'Distribution'}}
+
+            reg_figure = {'layout': {'title': 'Regression'}}
+
+            accordion_table1 = dbc.CardBody(children=[
+                dbc.Table.from_dataframe((df[0]), striped=True, bordered=True, hover=True, className="md-10")
+            ])
+
+            score = dbc.Alert('AdjR2: %.4f'% df[2], color="info")
+            rmse = dbc.Alert('RMSE: %.4f'% df[3], color="info")
+
+            return  None, figure, dist_figure, reg_figure, score, rmse, accordion_table1, accordion_table2
+
         except Exception as e:
-            figure = dbc.Alert("ERROR: "+str(e), color="danger"),
-
-        return figure
-
-    # @app.callback()
-    # def trigger_spinner(df):
-    #     time.sleep(1)
-    #     return df
-
+            children = dbc.Col([dbc.Alert("ERROR: " + str(e), color="danger", style={'margin-bottom':'8px'})], md=12, style={'margin': '0px', 'padding': '0px 4px'})
+            return  children, None, None, None, None, None, None, accordion_table2
 

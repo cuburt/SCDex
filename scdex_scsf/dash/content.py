@@ -1,15 +1,16 @@
 import dash_bootstrap_components as dbc
 import dash_html_components as html
 import dash_core_components as dcc
-from .callbacks import create_datatable, create_contractor_dropdown
+from .callbacks import create_contractor_dropdown
 import dash_table
 import plotly.graph_objects as go
 
 
 def navbar():
     navbar = dbc.NavbarSimple(children=[
-        dbc.NavItem(dbc.NavLink('Home', href='/')),
-        dbc.NavItem(dbc.NavLink('API Docs', href='#'))
+        dbc.NavItem(dbc.NavLink('Upload CSV', href='#')),
+        dbc.NavItem(dbc.NavLink('API Docs', href='#')),
+
     ],
         brand='SCDex',
         brand_href='/',
@@ -45,14 +46,15 @@ def header():
 
 def body():
     body = dbc.Container([
+        dbc.Row(id='notif-space'),
         dbc.Row(
             [
                 dbc.Col([
                     dbc.Card(
                         dbc.CardBody([
                             dbc.CardBody([
-                                html.H3(id='score_lbl'),
-                                html.H3(id='rmse_lbl'),
+                                html.Div(id='score_lbl'),
+                                html.Div(id='rmse_lbl'),
                             ]),
                             html.Hr(),
                         ])
@@ -79,17 +81,29 @@ def body():
                     dbc.CardBody(
                         dbc.Row([
                             dbc.Col([
-                                dcc.Graph(
-                                    id='distribution-graph',
-                                    style={'height': 300, 'margin': 0, 'padding': 0},
-                                    figure={'layout': {'title': 'Bell Curve Distribution'}}
-                                ),
+                                dcc.Loading(
+                                    id='dist-loading',
+                                    type='circle',
+                                    children=[
+                                        html.Div(id='dist-loading-output'),
+                                        dcc.Graph(
+                                            id='distribution-graph',
+                                            style={'height': 300, 'margin': 0, 'padding': 0}
+                                        )
+                                    ]
+                                )
                             ]),
                             dbc.Col([
-                                dcc.Graph(
-                                    id='regression-graph',
-                                    style={'height': 300, 'margin': 0, 'padding': 0},
-                                    figure={'layout': {'title': 'Regression'}}
+                                dcc.Loading(
+                                    id='reg-loading',
+                                    type='circle',
+                                    children=[
+                                        html.Div(id='reg-loading-output'),
+                                        dcc.Graph(
+                                            id='regression-graph',
+                                            style={'height': 300, 'margin': 0, 'padding': 0}
+                                        )
+                                    ]
                                 )
                             ])
                         ])
@@ -116,14 +130,13 @@ def make_item(i):
             dbc.CardBody(
                 html.H2(
                     dbc.Button(
-                        f"{'Regression Table' if i == 1 else 'Main Data Table'}",
+                        f"{'Forecast Table' if i == 1 else 'Main Data Table'}",
                         color="link",
                         id=f"group-{i}-toggle",
                     )
                 )
             ),
             dbc.Collapse(
-                dbc.CardBody([create_datatable(i)]),
                 id=f"collapse-{i}"
             ),
 
