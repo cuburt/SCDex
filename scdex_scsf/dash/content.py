@@ -51,13 +51,20 @@ def body():
             [
                 dbc.Col([
                     dbc.Card(
-                        dbc.CardBody([
-                            dbc.CardBody([
-                                html.Div(id='score_lbl'),
-                                html.Div(id='rmse_lbl'),
-                            ]),
-                            html.Hr(),
-                        ])
+                        dcc.Loading(
+                            id='label-loading',
+                            type='circle',
+                            children=
+                            [
+                                html.Div(id='label-loading-output'),
+                                dbc.CardBody(
+                                    [
+                                        html.Div(id='score_lbl'),
+                                        html.Div(id='rmse_lbl'),
+                                    ]
+                                )
+                            ]
+                        )
                     )
                 ], md=4, style={'margin':'0px','padding':'0px 4px'}),
 

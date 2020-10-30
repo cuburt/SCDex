@@ -67,15 +67,11 @@ def train_model(X_lately, X, y_lately, y, max_iter, min_perc):
         #     y_pred = model.predict(X_lately)
         y_test_pred = model.predict(X_test)
         val_model_score = score_model(X_test, y_test, y_test_pred)
-        print('Validation AdjR2:', val_model_score[0])
-        print('Validation RMSE:', val_model_score[1])
         if val_model_score[0] >= (min_perc/100):
             try:
                 mainmodel = define_model().fit(X, y)
                 y_pred = mainmodel.predict(X_lately)
                 model_score = score_model(X_lately, y_lately, y_pred)
-                print('Main AdjR2:', model_score[0])
-                print('Main RMSE:', model_score[1])
                 return [X_train, X_test, y_train, y_test, y_pred, model_score[0],model_score[1]]
             except Exception as e:
                 print(str(e))
@@ -112,13 +108,13 @@ def forecast(project_list):
         cv_df = pd.concat(project_list)
         cv_df = cv_df[['Slippage', '% WT Plan']]
         forecast_col = 'Slippage'
-        # X = cv_df
-        # scaler = preprocessing.MinMaxScaler()
-        # scaled_X = scaler.fit_transform(X)
-        # data = {'Slippage': scaled_X[:, 0], '% WT Plan': scaled_X[:, 1]}
-        # X = pd.DataFrame(data=data, index=X.index)
-        # X, X_lately = X.loc[train_index], X.loc[test_index]
-        X, X_lately = cv_df.loc[train_index], cv_df.loc[test_index]
+        X = cv_df
+        scaler = preprocessing.MinMaxScaler()
+        scaled_X = scaler.fit_transform(X)
+        data = {'Slippage': scaled_X[:, 0], '% WT Plan': scaled_X[:, 1]}
+        X = pd.DataFrame(data=data, index=X.index)
+        X, X_lately = X.loc[train_index], X.loc[test_index]
+        # X, X_lately = cv_df.loc[train_index], cv_df.loc[test_index]
         #cv_df, the y values of train_index shifted forward:
         cv_df['train'] = cv_df[forecast_col].head(len(train_index) + len(test_index)).shift(-(len(test_index)))
 
@@ -128,6 +124,7 @@ def forecast(project_list):
         #y is the y axis of the train_index, just shifted forward.
         y = np.array(cv_df['train'])
         y_lately = np.array(cv_df['test'])
+        y_lately = y_lately[np.logical_not(np.isnan(y_lately))]
 
         full_set = train_model(X_lately, X, y_lately, y, max_iter, min_perc)
         y_pred = full_set[4]
