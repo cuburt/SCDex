@@ -1,9 +1,8 @@
+from dash import html, dcc
 import dash_bootstrap_components as dbc
-import dash_html_components as html
-import dash_core_components as dcc
-from .callbacks import create_contractor_dropdown
-import dash_table
-import plotly.graph_objects as go
+from callbacks import create_contractor_dropdown
+# from dash import dash_table
+# import plotly.graph_objects as go
 
 
 def navbar():
